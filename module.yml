@@ -1,0 +1,126 @@
+---
+# Copyright 2018 widdix GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'cfn-modules: AWS VPC Subnet'
+# cfn-modules:implements()
+Parameters:
+  VpcPlainModule:
+    Description: 'stack name of vpc-plain module'
+    Type: String
+  Reach:
+    Description: 'Should the subnet has a route to the Internet?'
+    Type: String
+    AllowedValues: [private, public]
+  AZIndex:
+    Description: 'Index of the AZ where the subnet should be created in'
+    Type: Number
+    MinValue: 0
+    MaxValue: 2
+  AZChar:
+    Description: 'Name of the AZ using a single char'
+    Type: String
+    AllowedValues: [A, B, C]
+  SubnetIndex:
+    Description: 'Index of the subnet'
+    Type: Number
+    MinValue: 0
+    MaxValue: 5
+  SubnetCount:
+    Description: 'To slice the IP address ranges you need to specify how many subnets you want to create in the VPC'
+    Type: Number
+    MinValue: 1
+    MaxValue: 6
+Conditions:
+  IsPublic: !Equals [!Ref Reach, 'public']
+Resources:
+  Subnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select [!Ref AZIndex, !GetAZs '']
+      CidrBlock: !Select [!Ref SubnetIndex, !Cidr [{'Fn::ImportValue': !Sub '${VpcPlainModule}-CidrBlock'}, !Ref SubnetCount, 12]]
+      VpcId:
+        'Fn::ImportValue': !Sub '${VpcPlainModule}-Id'
+      Tags:
+      - Key: Name
+        Value: !Sub '${AZChar} ${Reach}'
+      - Key: Reach
+        Value: !Ref Reach
+  RouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId:
+        'Fn::ImportValue': !Sub '${VpcPlainModule}-Id'
+      Tags:
+      - Key: Name
+        Value: !Sub '${AZChar} ${Reach}'
+  SubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Subnet
+      RouteTableId: !Ref RouteTable
+  RouteInternet:
+    Type: 'AWS::EC2::Route'
+    Condition: IsPublic
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId:
+        'Fn::ImportValue': !Sub '${VpcPlainModule}-InternetGatewayId'
+  NetworkAcl:
+    Type: 'AWS::EC2::NetworkAcl'
+    Properties:
+      VpcId:
+        'Fn::ImportValue': !Sub '${VpcPlainModule}-Id'
+      Tags:
+      - Key: Name
+        Value: !Sub '${AZChar} ${Reach}'
+  NetworkAclEntryAllowAllInbound:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAcl
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      CidrBlock: '0.0.0.0/0'
+  NetworkAclEntryAllowAllOutbound:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAcl
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: '0.0.0.0/0'
+  SubnetNetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref Subnet
+      NetworkAclId: !Ref NetworkAcl
+Outputs:
+  ModuleId:
+    Value: 'vpc-subnet'
+  ModuleVersion:
+    Value: '0.0.7'
+  StackName:
+    Value: !Ref 'AWS::StackName'
+  SubnetId:
+    Value: !Ref Subnet
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetId'
+  RouteTableId:
+    Value: !Ref RouteTable
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableId'
