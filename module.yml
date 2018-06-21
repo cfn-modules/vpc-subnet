@@ -113,13 +113,13 @@ Outputs:
   ModuleId:
     Value: 'vpc-subnet'
   ModuleVersion:
-    Value: '0.0.7'
+    Value: '0.0.8'
   StackName:
     Value: !Ref 'AWS::StackName'
-  SubnetId:
+  Id:
     Value: !Ref Subnet
     Export:
-      Name: !Sub '${AWS::StackName}-SubnetId'
+      Name: !Sub '${AWS::StackName}-Id'
   RouteTableId:
     Value: !Ref RouteTable
     Export:
