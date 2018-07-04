@@ -14,7 +14,7 @@
 # limitations under the License.
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'cfn-modules: AWS VPC Subnet'
-# cfn-modules:implements()
+# cfn-modules:implements(ExposeId)
 Parameters:
   VpcPlainModule:
     Description: 'stack name of vpc-plain module'
