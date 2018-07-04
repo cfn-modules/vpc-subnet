@@ -1,6 +1,6 @@
 {
   "name": "@cfn-modules/vpc-subnet",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "AWS VPC subnet",
   "author": "Michael Wittig <michael@widdix.de>",
   "license": "Apache-2.0",

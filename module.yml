@@ -113,7 +113,7 @@ Outputs:
   ModuleId:
     Value: 'vpc-subnet'
   ModuleVersion:
-    Value: '0.0.9'
+    Value: '0.0.10'
   StackName:
     Value: !Ref 'AWS::StackName'
   Id:
@@ -124,3 +124,7 @@ Outputs:
     Value: !Ref RouteTable
     Export:
       Name: !Sub '${AWS::StackName}-RouteTableId'
+  AvailabilityZone:
+    Value: !Select [!Ref AZIndex, !GetAZs '']
+    Export:
+      Name: !Sub '${AWS::StackName}-AvailabilityZone'
