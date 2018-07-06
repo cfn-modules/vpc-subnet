@@ -29,7 +29,7 @@ Parameters:
     MinValue: 0
     MaxValue: 2
   AZChar:
-    Description: 'Name of the AZ using a single char'
+    Description: 'Availability zone char'
     Type: String
     AllowedValues: [A, B, C]
   SubnetIndex:
