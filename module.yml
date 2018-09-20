@@ -113,7 +113,7 @@ Outputs:
   ModuleId:
     Value: 'vpc-subnet'
   ModuleVersion:
-    Value: '0.0.10'
+    Value: '1.0.0'
   StackName:
     Value: !Ref 'AWS::StackName'
   Id:
