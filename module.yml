@@ -44,12 +44,14 @@ Parameters:
     MaxValue: 6
 Conditions:
   IsPublic: !Equals [!Ref Reach, 'public']
+  IsPrivate: !Equals [!Ref Reach, 'private']
 Resources:
   Subnet:
     Type: 'AWS::EC2::Subnet'
     Properties:
       AvailabilityZone: !Select [!Ref AZIndex, !GetAZs '']
       CidrBlock: !Select [!Ref SubnetIndex, !Cidr [{'Fn::ImportValue': !Sub '${VpcPlainModule}-CidrBlock'}, !Ref SubnetCount, 12]]
+      Ipv6CidrBlock: !Select [!Ref SubnetIndex, !Cidr [{'Fn::ImportValue': !Sub '${VpcPlainModule}-CidrBlockIPv6'}, !Ref SubnetCount, 64]]
       VpcId:
         'Fn::ImportValue': !Sub '${VpcPlainModule}-Id'
       Tags:
@@ -76,8 +78,21 @@ Resources:
     Properties:
       RouteTableId: !Ref RouteTable
       DestinationCidrBlock: '0.0.0.0/0'
-      GatewayId:
-        'Fn::ImportValue': !Sub '${VpcPlainModule}-InternetGatewayId'
+      GatewayId: {'Fn::ImportValue': !Sub '${VpcPlainModule}-InternetGatewayId'}
+  RouteInternetPublicIPv6:
+    Type: 'AWS::EC2::Route'
+    Condition: IsPublic
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationIpv6CidrBlock: '::/0'
+      GatewayId: {'Fn::ImportValue': !Sub '${VpcPlainModule}-InternetGatewayId'}
+  RouteInternetPrivateIPv6:
+    Type: 'AWS::EC2::Route'
+    Condition: IsPrivate
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationIpv6CidrBlock: '::/0'
+      EgressOnlyInternetGatewayId: {'Fn::ImportValue': !Sub '${VpcPlainModule}-EgressOnlyInternetGatewayId'}
   NetworkAcl:
     Type: 'AWS::EC2::NetworkAcl'
     Properties:
@@ -95,6 +110,15 @@ Resources:
       RuleAction: allow
       Egress: false
       CidrBlock: '0.0.0.0/0'
+  NetworkAclEntryAllowAllInboundIPv6:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAcl
+      RuleNumber: 98
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      Ipv6CidrBlock: '::/0'
   NetworkAclEntryAllowAllOutbound:
     Type: 'AWS::EC2::NetworkAclEntry'
     Properties:
@@ -104,6 +128,15 @@ Resources:
       RuleAction: allow
       Egress: true
       CidrBlock: '0.0.0.0/0'
+  NetworkAclEntryAllowAllOutboundIPv6:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAcl
+      RuleNumber: 98
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      Ipv6CidrBlock: '::/0'
   SubnetNetworkAclAssociation:
     Type: 'AWS::EC2::SubnetNetworkAclAssociation'
     Properties:
@@ -113,7 +146,7 @@ Outputs:
   ModuleId:
     Value: 'vpc-subnet'
   ModuleVersion:
-    Value: '1.0.0'
+    Value: '2.0.0'
   StackName:
     Value: !Ref 'AWS::StackName'
   Id:
