@@ -52,6 +52,7 @@ Resources:
       AvailabilityZone: !Select [!Ref AZIndex, !GetAZs '']
       CidrBlock: !Select [!Ref SubnetIndex, !Cidr [{'Fn::ImportValue': !Sub '${VpcPlainModule}-CidrBlock'}, !Ref SubnetCount, 12]]
       Ipv6CidrBlock: !Select [!Ref SubnetIndex, !Cidr [{'Fn::ImportValue': !Sub '${VpcPlainModule}-CidrBlockIPv6'}, !Ref SubnetCount, 64]]
+      AssignIpv6AddressOnCreation: true
       VpcId:
         'Fn::ImportValue': !Sub '${VpcPlainModule}-Id'
       Tags:
